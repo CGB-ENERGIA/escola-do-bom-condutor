@@ -1,0 +1,13 @@
+{
+  "name": "escola-do-bom-condutor",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "bun run --parallel dev:api dev:web dev:dash",
+    "dev:api": "bun --filter @ebc/api dev",
+    "dev:web": "bun --filter @ebc/web dev",
+    "dev:dash": "bun --filter @ebc/dash dev",
+    "build": "bun --filter @ebc/web build",
+    "typecheck": "bun --filter '*' typecheck"
+  }
+}

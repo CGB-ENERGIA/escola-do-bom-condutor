@@ -1,0 +1,13 @@
+{
+  "name": "@ebc/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": { "@ebc/shared": "workspace:*", "hono": "^4.6.0" },
+  "devDependencies": { "@types/bun": "latest", "typescript": "^5.6.0" }
+}
