@@ -5,6 +5,8 @@ import Login from "./pages/Login";
 import Dash from "./pages/Dash";
 import Teorica from "./pages/Teorica";
 import Pratica from "./pages/Pratica";
+import Detalhamento from "./pages/Detalhamento";
+import Configuracao from "./pages/Configuracao";
 
 function Protegido({ children }: { children: React.ReactNode }) {
   return sessao.get() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -18,6 +20,8 @@ export default function App() {
         <Route index element={<Dash />} />
         <Route path="teorica" element={<Teorica />} />
         <Route path="pratica" element={<Pratica />} />
+        <Route path="detalhamento" element={<Detalhamento />} />
+        <Route path="configuracao" element={<Configuracao />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

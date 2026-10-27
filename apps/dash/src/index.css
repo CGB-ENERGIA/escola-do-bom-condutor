@@ -257,3 +257,99 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .navitem:hover { background: var(--surface-2); color: var(--fg); }
 .navitem.active { background: var(--p-tint); color: var(--p); }
 .live { width: .5rem; height: .5rem; border-radius: 50%; background: var(--p); animation: ring 1.8s ease-out infinite; }
+
+/* -- Celular ------------------------------------------------------------ */
+html, body { overflow-x: clip; }
+.opt, .inp { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  /* 16px evita o zoom automatico do iPhone ao focar em campos */
+  .inp, select.inp, textarea.inp { font-size: 16px !important; }
+  .btn { padding: .85rem 1.1rem; }
+  .step { width: 2.6rem; height: 2.6rem; border-radius: .75rem; }
+  .icon-btn { width: 2.6rem; height: 2.6rem; }
+  .qn { height: 2.6rem; }
+  .card, .glass { border-radius: 1.1rem; }
+}
+
+/* Icone de relatorio animado */
+.relatorio-ico .rel-bar { transform-box: fill-box; transform-origin: bottom; animation: relBar 2.6s ease-in-out infinite; }
+.relatorio-ico .rel-b2 { animation-delay: .25s; }
+.relatorio-ico .rel-b3 { animation-delay: .5s; }
+.relatorio-ico .rel-linha { stroke-dasharray: 30; stroke-dashoffset: 30; animation: relLinha 2.6s ease-in-out infinite; }
+@keyframes relBar { 0%, 100% { transform: scaleY(.45); } 45%, 70% { transform: scaleY(1); } }
+@keyframes relLinha { 0% { stroke-dashoffset: 30; } 45%, 75% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -30; } }
+
+/* Cartao de detalhes dos graficos */
+.tip { position: fixed; z-index: 80; min-width: 11rem; max-width: 16rem; pointer-events: none; padding: .7rem .85rem; border-radius: .9rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid var(--border-2); box-shadow: var(--sh-lg); animation: fadeIn .12s ease both; }
+.tip-t { display: flex; align-items: center; gap: .5rem; font-size: .85rem; font-weight: 800; margin: 0 0 .45rem; color: var(--fg); }
+.tip-t i, .tip dt i { display: inline-block; flex: none; width: .55rem; height: .55rem; border-radius: 999px; }
+.tip dl { margin: 0; display: grid; gap: .25rem; }
+.tip dl > div { display: flex; align-items: center; justify-content: space-between; gap: 1.1rem; font-size: .76rem; }
+.tip dt { display: inline-flex; align-items: center; gap: .4rem; color: var(--fg-muted); font-weight: 600; }
+.tip dd { margin: 0; font-weight: 800; color: var(--fg); font-variant-numeric: tabular-nums; }
+
+/* -- Fundo das telas de entrada: movimento bem visivel ------------------ */
+@keyframes auroraA { 0%,100% { transform: translate(0,0) scale(1); } 25% { transform: translate(18vw,10vh) scale(1.18); } 50% { transform: translate(8vw,28vh) scale(.92); } 75% { transform: translate(-6vw,12vh) scale(1.1); } }
+@keyframes auroraB { 0%,100% { transform: translate(0,0) scale(1); } 25% { transform: translate(-20vw,-12vh) scale(1.15); } 50% { transform: translate(-8vw,-26vh) scale(.9); } 75% { transform: translate(8vw,-10vh) scale(1.12); } }
+@keyframes auroraC { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-24vw,14vh) scale(1.3); } 66% { transform: translate(14vw,-16vh) scale(.85); } }
+.aurora i:nth-child(1) { animation: auroraA 13s ease-in-out infinite; opacity: 1; }
+.aurora i:nth-child(2) { animation: auroraB 16s ease-in-out infinite; }
+.aurora i:nth-child(3) { animation: auroraC 11s ease-in-out infinite; }
+@keyframes gradeMove { from { background-position: 0 0, 0 0; } to { background-position: 44px 44px, 44px 44px; } }
+.grid-bg { animation: gradeMove 5s linear infinite; opacity: .6; }
+.fx-pontos { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.fx-pontos b { position: absolute; bottom: -20px; border-radius: 50%; background: var(--p); opacity: 0; filter: blur(.4px); animation: pontoSobe linear infinite; box-shadow: 0 0 14px var(--p-ring); }
+@keyframes pontoSobe { 0% { transform: translateY(0) translateX(0); opacity: 0; } 12% { opacity: .55; } 50% { transform: translateY(-55vh) translateX(18px); } 88% { opacity: .4; } 100% { transform: translateY(-112vh) translateX(-14px); opacity: 0; } }
+
+/* Tabelas dos relatorios */
+.tabela-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); }
+.tabela { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.tabela th { text-align: left; padding: .7rem .85rem; background: var(--surface-2); color: var(--fg-muted); font-weight: 800; font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.tabela th.ord { cursor: pointer; user-select: none; }
+.tabela th.ord:hover { color: var(--fg); }
+.tabela td { padding: .7rem .85rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tabela tbody tr:last-child td { border-bottom: 0; }
+.tabela tbody tr:hover { background: var(--surface-2); }
+
+/* Aba selecionada (Detalhamento) e selo de filtro ativo */
+.opt[aria-selected="true"] { border-color: var(--p); background: var(--p-tint); box-shadow: 0 0 0 4px var(--p-ring); }
+.opt[aria-selected="true"] .faint { color: var(--p); opacity: .85; }
+.sel-marca { position: absolute; top: .55rem; right: .55rem; display: inline-flex; align-items: center; gap: .25rem; border-radius: 999px; padding: .12rem .5rem; font-size: .62rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; background: var(--p); color: var(--p-fg); animation: popIn .3s cubic-bezier(.22,1,.36,1) both; }
+.sel-marca.sel-alt { background: var(--fg); color: var(--surface); }
+
+/* -- Fundo "estrada" das telas de entrada ------------------------------- */
+.grid-bg, .fx-pontos { display: none !important; }
+.estrada { position: fixed; left: 0; right: 0; bottom: 0; height: clamp(150px, 26vh, 240px); z-index: -1; overflow: hidden; pointer-events: none; }
+.estrada::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, color-mix(in srgb, var(--p) 10%, transparent), transparent 85%); }
+.estrada .pista { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: color-mix(in srgb, var(--surface-3) 90%, transparent); border-top: 3px solid color-mix(in srgb, var(--p) 40%, transparent); }
+.estrada .pista::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px;
+  background: linear-gradient(90deg, var(--fg-faint) 0 48px, transparent 48px) 0 0 / 100px 4px repeat-x; opacity: .6; animation: faixaMove 1.1s linear infinite; }
+@keyframes faixaMove { from { background-position-x: 0; } to { background-position-x: -100px; } }
+.estrada .veic { position: absolute; left: 0; color: var(--p); opacity: .6; will-change: transform; animation: veicPassa linear infinite; }
+@keyframes veicPassa { from { transform: translateX(-240px); } to { transform: translateX(calc(100vw + 60px)); } }
+.estrada .placa { position: absolute; left: 0; bottom: 54px; opacity: .55; will-change: transform; animation: placaPassa linear infinite; }
+@keyframes placaPassa { from { transform: translateX(calc(100vw + 60px)); } to { transform: translateX(-80px); } }
+@media (max-width: 640px) { .estrada { height: clamp(120px, 20vh, 170px); } .estrada .placa { opacity: .4; } }
+
+/* Fundo minimalista (Relatorios) */
+.fundo-min { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60rem 36rem at 50% -8%, color-mix(in srgb, var(--p) 13%, transparent), transparent 70%),
+    radial-gradient(44rem 30rem at 100% 100%, color-mix(in srgb, var(--i) 7%, transparent), transparent 70%); }
+
+/* -- Tela de entrada dos Relatorios: logo neon + rede de dados + barras ---- */
+.logo-neon { overflow: visible; color: #34d6a0; filter: drop-shadow(0 0 1px rgba(255,255,255,.15));
+  animation: neonCor 14s linear infinite, neonFlicker 9s steps(1) infinite, logoFlutua 6s ease-in-out infinite; }
+@keyframes neonCor { 0%, 100% { color: #34d6a0; } 25% { color: #38bdf8; } 50% { color: #a78bfa; } 75% { color: #ff4d8d; } }
+@keyframes neonFlicker { 0%, 100% { opacity: 1; } 61% { opacity: 1; } 62% { opacity: .55; } 63% { opacity: 1; } 64% { opacity: .75; } 65% { opacity: 1; } }
+@keyframes logoFlutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+.rede-dados { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; color: var(--p); }
+
+.eq { position: fixed; left: 0; right: 0; bottom: 0; height: 24vh; z-index: -1; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; gap: clamp(3px, .7vw, 10px); opacity: .55;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, transparent 100%); }
+.eq i { flex: 1 1 0; min-width: 3px; max-width: 18px; border-radius: 4px 4px 0 0; transform-origin: bottom;
+  background: linear-gradient(to top, var(--p), color-mix(in srgb, var(--i) 60%, transparent)); animation: eqSobe ease-in-out infinite alternate; }
+@keyframes eqSobe { from { transform: scaleY(.12); } to { transform: scaleY(1); } }

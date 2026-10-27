@@ -3,7 +3,6 @@ import {
   CRITERIOS_PRATICOS, VEICULOS, avaliarPratica,
   type AvaliacaoPratica, type AvaliacaoPraticaDetalhada, type CriarAvaliacaoPraticaReq, type Evidencia, type LoginInstrutorReq,
 } from "@ebc/shared";
-import { carregarEvidencia } from "./evidencias";
 import { exigirInstrutor, loginInstrutor } from "../auth";
 import type { Repository } from "../repository";
 
@@ -13,7 +12,7 @@ export function praticaRoutes(repo: Repository) {
   /** POST /api/pratica/login { usuario, senha } */
   app.post("/login", async (c) => {
     const { usuario, senha } = (await c.req.json()) as LoginInstrutorReq;
-    const r = loginInstrutor(usuario ?? "", senha ?? "");
+    const r = await loginInstrutor(usuario ?? "", senha ?? "");
     return r ? c.json(r) : c.json({ erro: "Senha incorreta" }, 401);
   });
 
@@ -30,7 +29,7 @@ export function praticaRoutes(repo: Repository) {
       (o) => ids.has(o.criterioId) && Number.isInteger(o.quantidade) && o.quantidade > 0 && o.quantidade <= 20,
     );
     const evidencias = (
-      await Promise.all((b.evidencias ?? []).slice(0, 10).map((id) => carregarEvidencia(id)))
+      await Promise.all((b.evidencias ?? []).slice(0, 10).map((id) => repo.getEvidencia(id)))
     ).filter((e): e is Evidencia => !!e);
     if (evidencias.length === 0) return c.json({ erro: "Registre ao menos 1 foto de evidência para finalizar a avaliação." }, 400);
     if (!(b.descricao ?? "").trim()) return c.json({ erro: "Preencha a descrição / observações do instrutor para finalizar a avaliação." }, 400);

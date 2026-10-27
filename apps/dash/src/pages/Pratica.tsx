@@ -16,8 +16,9 @@ export default function Pratica() {
   const ctl = useFiltros<Linha>();
   const { f, set, alternar, passa } = ctl;
 
-  const todas: Linha[] = useMemo(() => (dados?.registros ?? []).map((r) => ({
-    ...r, ...derivar(r.realizadaEm, r.gerencia, r.base), ok: r.apto,
+  // O relatório de Prática é da Escola do Bom Condutor; o De Olho na Condução aparece no Detalhamento.
+  const todas: Linha[] = useMemo(() => (dados?.registros ?? []).filter((r) => r.programa === "Escola do Bom Condutor").map((r) => ({
+    ...r, ...derivar(r.realizadaEm, r.gerencia, r.base, r.coordenador), ok: r.apto, colabId: r.colaboradorId, colabNome: r.nome,
   })), [dados]);
 
   const linhas = todas.filter((l) => passa(l));
@@ -29,11 +30,13 @@ export default function Pratica() {
     .sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => ({ chave: k, rotulo: rotuloMes(k), valor: v.length }));
   const mesSel = f.ano && f.mes ? chaveMes(Number(f.ano), Number(f.mes)) : undefined;
 
-  const duplas = (campo: "baseK" | "gerenciaK", ign: "base" | "gerencia") =>
+  const duplas = (campo: "baseK" | "gerenciaK" | "coordK", ign: "base" | "gerencia" | "coordenador") =>
     agrupar(todas.filter((l) => passa(l, ign)), (l) => l[campo])
       .map(([k, v]) => ({ chave: k, rotulo: k, a: v.filter((l) => l.ok).length, b: v.filter((l) => !l.ok).length }))
       .sort((x, y) => y.a + y.b - (x.a + x.b));
 
+  /** As listas de colaboradores ignoram o próprio filtro, para o usuário poder trocar de colaborador. */
+  const baseLista = todas.filter((l) => passa(l, "colaborador"));
   /** Lista de colaboradores com a quantidade de avaliações que atendem ao critério. */
   const lista = (ls: Linha[]) => agrupar(ls, (l) => l.colaboradorId)
     .map(([k, v]) => ({ chave: k, rotulo: v[0]!.nome, valor: v.length }))
@@ -66,7 +69,7 @@ export default function Pratica() {
 
           <div className="grid gap-4 lg:grid-cols-12">
             <Painel titulo="Avaliação por mês" className="lg:col-span-4">
-              <Barras itens={porMes} selecionado={mesSel}
+              <Barras itens={porMes} selecionado={mesSel} rotValor="Avaliações"
                 onSelecionar={(k) => (mesSel === k ? set({ ano: "", mes: "" }) : set({ ano: String(Number(k.slice(0, 4))), mes: String(Number(k.slice(5))) }))} />
             </Painel>
             <Painel titulo="Aptos vs Inaptos por Base" className="lg:col-span-4">
@@ -76,17 +79,21 @@ export default function Pratica() {
               <BarrasDuplas itens={duplas("gerenciaK", "gerencia")} rotA="Aptos" rotB="Inaptos" selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} />
             </Painel>
 
+            <Painel titulo="Aptos vs Inaptos por Coordenador" className="lg:col-span-12">
+              <BarrasDuplas itens={duplas("coordK", "coordenador")} rotA="Aptos" rotB="Inaptos" selecionado={f.coordenador} onSelecionar={(k) => alternar("coordenador", k)} />
+            </Painel>
+
             <Painel titulo="% de Inaptos" className="lg:col-span-3">
-              <Rosca pct={pctInaptos} rotulo={`${inaptos} de ${linhas.length}`} />
+              <Rosca pct={pctInaptos} rotulo={`${inaptos} de ${linhas.length}`} legenda={[{ rotulo: "Inaptos", valor: inaptos, cor: "var(--d)" }, { rotulo: "Aptos", valor: aptos, cor: "var(--p)" }]} />
             </Painel>
             <Painel titulo="Colaboradores Aptos" className="lg:col-span-3">
-              <ListaContagem itens={lista(linhas.filter((l) => l.ok))} cor="var(--p)" />
+              <ListaContagem itens={lista(baseLista.filter((l) => l.ok))} cor="var(--p)" rotValor="Avaliações aptas" selecionado={f.colaborador} onSelecionar={(k) => alternar("colaborador", k)} />
             </Painel>
             <Painel titulo="Colaboradores Inaptos" className="lg:col-span-3">
-              <ListaContagem itens={lista(linhas.filter((l) => !l.ok))} cor="var(--d)" />
+              <ListaContagem itens={lista(baseLista.filter((l) => !l.ok))} cor="var(--d)" rotValor="Avaliações inaptas" selecionado={f.colaborador} onSelecionar={(k) => alternar("colaborador", k)} />
             </Painel>
             <Painel titulo="Colaboradores Reteste" className="lg:col-span-3">
-              <ListaContagem itens={lista(linhas.filter((l) => l.tipo === "reteste"))} cor="var(--w)" />
+              <ListaContagem itens={lista(baseLista.filter((l) => l.tipo === "reteste"))} cor="var(--w)" rotValor="Retestes" selecionado={f.colaborador} onSelecionar={(k) => alternar("colaborador", k)} />
             </Painel>
           </div>
         </>

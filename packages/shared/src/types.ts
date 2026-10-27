@@ -12,6 +12,12 @@ export type Colaborador = {
   funcao: string | null;
   base: string | null;
   gerencia: string | null;
+  /** Processo(s) em que atua (vários separados por " / "). */
+  processo?: string | null;
+  /** Nome do gerente responsável (a planilha não traz; é preenchido na Configuração). */
+  gerente?: string | null;
+  /** ATIVO, FÉRIAS, ... ou "FORA DA BASE" (consta só no histórico; não aparece na busca). */
+  situacao?: string | null;
 };
 
 export type Alternativa = { id: string; texto: string };
@@ -130,6 +136,8 @@ export type RegistroTeorico = {
   matricula: string | null;
   base: string | null;
   gerencia: string | null;
+  /** Coordenador do colaborador (campo "gerente" da base). */
+  coordenador?: string | null;
   categoria: Categoria;
   pontos: number;
   pontosMaximos: number;
@@ -147,15 +155,72 @@ export type RegistroPratico = {
   matricula: string | null;
   base: string | null;
   gerencia: string | null;
+  coordenador?: string | null;
   tipo: "primeira" | "reteste";
   veiculo: TipoVeiculo | null;
   pontos: number;
   apto: boolean;
+  /** "Escola do Bom Condutor" ou "De Olho na Condução" (a prática vale para os dois; a teórica só para a Escola). */
+  programa: string;
+  /** Infrações cometidas (critério + quantidade). */
+  ocorrencias: Ocorrencia[];
+  /** Observações do instrutor. */
+  descricao: string;
   avaliador: string;
   /** Pode ser nulo nos registros históricos sem data. */
   realizadaEm: string | null;
 };
 export type DashboardPraticaRes = { demo: boolean; registros: RegistroPratico[] };
+
+/* ---------- Configuração: base de colaboradores ---------- */
+export type BaseColaboradoresRes = {
+  /** true quando há banco de dados (as alterações ficam guardadas). */
+  persistente: boolean;
+  /** false em produção sem banco: a tela só consulta. */
+  editavel: boolean;
+  colaboradores: Colaborador[];
+};
+/** O que fazer com quem está na base mas não veio na planilha importada. */
+export type AusentesAcao = "desligar" | "excluir" | "manter";
+export type ImportacaoRes = {
+  aplicada: boolean;
+  arquivo: { nome: string; linhas: number; validos: number; duplicados: number; ignorados: string[] };
+  novos: Colaborador[];
+  alterados: { antes: Colaborador; depois: Colaborador; campos: string[] }[];
+  ausentes: Colaborador[];
+  semMudanca: number;
+};
+
+/** Resumo da última avaliação de um colaborador em um tipo de avaliação. */
+export type ResumoAvaliacao = { qtd: number; ultima: string | null; /** aprovado / apto na última */ ok: boolean; pontos: number };
+/** Um colaborador e o que ele já fez: teórica (só Escola), prática da Escola e prática do De Olho na Condução. */
+export type RegistroCruzamento = {
+  colaboradorId: string;
+  nome: string;
+  matricula: string | null;
+  base: string | null;
+  gerencia: string | null;
+  coordenador?: string | null;
+  teorica: ResumoAvaliacao | null;
+  praticaEscola: ResumoAvaliacao | null;
+  praticaOlho: ResumoAvaliacao | null;
+};
+export type CruzamentoRes = { demo: boolean; registros: RegistroCruzamento[] };
+
+/** Questão da prova com gabarito, usada só no detalhamento do painel (área restrita). */
+export type QuestaoCatalogo = {
+  id: string;
+  /** Provas de Carro e Caminhão usam as mesmas questões. */
+  grupo: "carro" | "moto";
+  numero: number;
+  enunciado: string;
+  /** Id da alternativa correta. */
+  correta: string;
+  alternativas: Alternativa[];
+};
+/** Prova teórica finalizada + as questões erradas: [id da questão, id da alternativa marcada ou null se em branco]. */
+export type RegistroTeoricoDetalhe = RegistroTeorico & { erros: [string, string | null][] };
+export type DetalheTeoricaRes = { demo: boolean; questoes: QuestaoCatalogo[]; registros: RegistroTeoricoDetalhe[] };
 
 export type CriarAvaliacaoPraticaReq = {
   colaboradorId: string;

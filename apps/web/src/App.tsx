@@ -55,6 +55,11 @@ function Layout() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {/* Crédito do desenvolvedor (a ficha do instrutor tem uma barra fixa embaixo, então ganha mais espaço) */}
+      <footer className={`faint px-4 text-center text-[0.7rem] ${pathname === "/instrutor/avaliacao" ? "pb-28" : "pb-6"}`}>
+        Desenvolvedor: <strong style={{ color: "var(--fg-muted)" }}>Marcus Vinicius Silva Queiros</strong>
+      </footer>
     </div>
   );
 }

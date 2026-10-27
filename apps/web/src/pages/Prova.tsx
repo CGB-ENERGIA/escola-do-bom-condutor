@@ -36,6 +36,15 @@ export default function Prova() {
   const respRef = useRef(respostas);
   respRef.current = respostas;
   const auto = useRef(false);
+  const [confirmando, setConfirmando] = useState(false);
+
+  // Esc fecha a confirmação
+  useEffect(() => {
+    if (!confirmando) return;
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setConfirmando(false); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [confirmando]);
 
   // Tempo acabou: envia automaticamente só o que foi respondido
   useEffect(() => {
@@ -48,6 +57,7 @@ export default function Prova() {
   const q = prova.questoes[i]!;
   const respondidas = prova.questoes.filter((x) => respostas[x.id]).length;
   const faltam = total - respondidas;
+  const semResposta = prova.questoes.map((x, idx) => ({ x, idx })).filter(({ x }) => !respostas[x.id]);
 
   const ir = (n: number) => { setSentido(n > i ? 1 : -1); setI(n); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
@@ -64,10 +74,8 @@ export default function Prova() {
     }
   }
 
-  async function finalizar() {
-    if (faltam > 0 && !window.confirm(`Ainda há ${faltam} questão(ões) sem resposta. Finalizar mesmo assim?`)) return;
-    await enviar();
-  }
+  /** Pede confirmação (concluir ou revisar) antes de enviar a prova. */
+  function finalizar() { setConfirmando(true); }
 
   const ultima = i === total - 1;
   const critico = restante <= 60;
@@ -165,6 +173,55 @@ export default function Prova() {
         </button>
       )}
       {erro && !esgotado && <p className="alert af" role="alert">{erro}</p>}
+
+      {/* Confirmação ao finalizar: concluir ou revisar (só enquanto houver tempo) */}
+      {confirmando && !esgotado && (
+        <div className="af fixed inset-0 z-50 grid place-items-center p-4" style={{ background: "rgba(0,0,0,.65)", backdropFilter: "blur(5px)" }}
+          onClick={() => setConfirmando(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="confirma-titulo" className="ap glass w-full max-w-md space-y-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h2 id="confirma-titulo" className="text-xl font-extrabold tracking-tight">Concluir a prova?</h2>
+              <p className="muted mt-1 text-sm">
+                {faltam === 0
+                  ? "Você respondeu todas as questões."
+                  : <>Você ainda tem <strong style={{ color: "var(--d)" }}>{faltam} questão(ões) sem resposta</strong>, que valerão zero.</>}
+                {" "}Depois de concluir, não será possível alterar as respostas.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="card p-3" style={{ borderRadius: "var(--r)" }}>
+                <p className="text-2xl font-extrabold" style={{ color: "var(--p)", fontVariantNumeric: "tabular-nums" }}>{respondidas}<span className="faint text-base font-semibold">/{total}</span></p>
+                <p className="muted text-xs font-semibold">respondidas</p>
+              </div>
+              <div className="card p-3" style={{ borderRadius: "var(--r)" }}>
+                <p className="text-2xl font-extrabold" style={{ color: corTempo, fontVariantNumeric: "tabular-nums" }}>{mmss(restante)}</p>
+                <p className="muted text-xs font-semibold">de tempo restante</p>
+              </div>
+            </div>
+
+            {semResposta.length > 0 && (
+              <div>
+                <p className="muted mb-2 text-xs font-semibold">Sem resposta (toque para ir até a questão):</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {semResposta.map(({ x, idx }) => (
+                    <button key={x.id} type="button" className="qn !h-9 !w-10" onClick={() => { setConfirmando(false); ir(idx); }} aria-label={`Ir para a questão ${x.numero}`}>{x.numero}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <button type="button" className="btn btn-g flex-1" onClick={() => { setConfirmando(false); if (semResposta[0]) ir(semResposta[0].idx); }} autoFocus>
+                Revisar a prova
+              </button>
+              <button type="button" className="btn btn-p flex-1" disabled={enviando} onClick={() => { setConfirmando(false); void enviar(); }}>
+                Concluir a prova
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

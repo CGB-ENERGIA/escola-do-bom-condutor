@@ -20,7 +20,7 @@ export default function Dash() {
   const { f, set, alternar, passa } = ctl;
 
   const todas: Linha[] = useMemo(() => (dados?.registros ?? []).map((r) => ({
-    ...r, ...derivar(r.finalizadaEm, r.gerencia, r.base), ok: r.aprovado,
+    ...r, ...derivar(r.finalizadaEm, r.gerencia, r.base, r.coordenador), ok: r.aprovado, colabId: r.colaboradorId, colabNome: r.nome,
   })), [dados]);
 
   const linhas = todas.filter((l) => passa(l));
@@ -32,11 +32,11 @@ export default function Dash() {
   const mesSel = f.ano && f.mes ? chaveMes(Number(f.ano), Number(f.mes)) : undefined;
   const selecionarMes = (k: string) => (mesSel === k ? set({ ano: "", mes: "" }) : set({ ano: String(Number(k.slice(0, 4))), mes: String(Number(k.slice(5))) }));
 
-  const por = (campo: "baseK" | "gerenciaK", ign: "base" | "gerencia") =>
+  const por = (campo: "baseK" | "gerenciaK" | "coordK", ign: "base" | "gerencia" | "coordenador") =>
     agrupar(todas.filter((l) => passa(l, ign)), (l) => l[campo])
       .map(([k, v]) => ({ chave: k, rotulo: k, valor: v.length })).sort((a, b) => b.valor - a.valor);
 
-  const participacao = agrupar(linhas, (l) => l.colaboradorId)
+  const participacao = agrupar(todas.filter((l) => passa(l, "colaborador")), (l) => l.colaboradorId)
     .map(([k, v]) => ({ chave: k, rotulo: v[0]!.nome, valor: v.length }))
     .sort((a, b) => b.valor - a.valor || a.rotulo.localeCompare(b.rotulo));
 
@@ -65,26 +65,29 @@ export default function Dash() {
 
           <div className="grid gap-4 lg:grid-cols-12">
             <Painel titulo="Participantes por Mês" className="lg:col-span-3">
-              <Barras itens={porMes} selecionado={mesSel} onSelecionar={selecionarMes} />
+              <Barras itens={porMes} selecionado={mesSel} onSelecionar={selecionarMes} rotValor="Participantes" />
             </Painel>
             <Painel titulo="Participantes por Base" className="lg:col-span-3">
-              <Barras itens={por("baseK", "base")} selecionado={f.base} onSelecionar={(k) => alternar("base", k)} />
+              <Barras itens={por("baseK", "base")} selecionado={f.base} onSelecionar={(k) => alternar("base", k)} rotValor="Participantes" />
             </Painel>
             <Painel titulo="Participantes por Gerência" className="lg:col-span-3">
-              <Barras itens={por("gerenciaK", "gerencia")} selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} />
+              <Barras itens={por("gerenciaK", "gerencia")} selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} rotValor="Participantes" />
             </Painel>
             <Painel titulo="Participação na Escola" className="row-span-2 lg:col-span-3">
-              <ListaContagem itens={participacao} cor="var(--d)" altura="32rem" />
+              <ListaContagem itens={participacao} cor="var(--d)" altura="32rem" rotValor="Participações" selecionado={f.colaborador} onSelecionar={(k) => alternar("colaborador", k)} />
             </Painel>
 
             <Painel titulo="Horas por Mês" className="lg:col-span-3">
-              <GraficoLinha itens={horasMes} selecionado={mesSel} onSelecionar={selecionarMes} />
+              <GraficoLinha itens={horasMes} selecionado={mesSel} onSelecionar={selecionarMes} rotValor="Horas treinadas" />
             </Painel>
             <Painel titulo="Participantes por Base" className="lg:col-span-3">
               <Pizza itens={por("baseK", "base")} selecionado={f.base} onSelecionar={(k) => alternar("base", k)} />
             </Painel>
             <Painel titulo="Participantes por Gerência" className="lg:col-span-3">
               <Pizza itens={por("gerenciaK", "gerencia")} selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} />
+            </Painel>
+            <Painel titulo="Participantes por Coordenador" className="lg:col-span-12">
+              <Barras itens={por("coordK", "coordenador")} selecionado={f.coordenador} onSelecionar={(k) => alternar("coordenador", k)} rotValor="Participantes" />
             </Painel>
           </div>
           <p className="faint text-xs">Cada avaliação teórica finalizada conta como uma participação ({HORAS_POR_PARTICIPACAO} h de treinamento).</p>

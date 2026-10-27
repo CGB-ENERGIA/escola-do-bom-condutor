@@ -33,7 +33,7 @@ export default defineConfig({
       },
       workbox: {
         // A API nunca vem do cache: prova, tempo e resultados precisam ser sempre do servidor.
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/painel/],
         runtimeCaching: [
           { urlPattern: ({ url }) => url.pathname.startsWith("/api/"), handler: "NetworkOnly" },
           {

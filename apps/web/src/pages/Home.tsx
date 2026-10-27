@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { CATEGORIAS, REGRAS, type Categoria, type Colaborador } from "@ebc/shared";
 import BuscaColaborador from "../components/BuscaColaborador";
 import Fundo from "../components/Fundo";
-import { Caminhao, Carro, Moto, Seta, Volante } from "../components/Icones";
+import { Caminhao, Carro, Moto, Seta } from "../components/Icones";
+import LogoNeon from "../components/LogoNeon";
 import { api } from "../lib/api";
 import { useSessao } from "../lib/sessao";
 
@@ -40,9 +41,8 @@ export default function Home() {
       <section className="mx-auto max-w-xl">
         {/* Hero */}
         <div className="mb-7 text-center">
-          <div className="au mx-auto mb-5 grid place-items-center rounded-[1.4rem]"
-            style={{ width: 72, height: 72, background: "var(--p)", color: "var(--p-fg)", animation: "popIn .7s cubic-bezier(.22,1,.36,1) both, ring 2.6s 1s ease-out infinite" }}>
-            <Volante width={38} height={38} style={{ animation: "wheel 14s linear infinite" }} />
+          <div className="au mx-auto mb-4" style={{ width: "min(22rem, 78vw)" }}>
+            <LogoNeon className="logo-neon-tema" />
           </div>
           <h1 className="au d1 text-[1.9rem] font-extrabold leading-tight tracking-tight sm:text-4xl">
             Avaliação <span style={{ color: "var(--p)" }}>teórica</span>
@@ -50,12 +50,6 @@ export default function Home() {
           <p className="au d2 muted mx-auto mt-2 max-w-sm text-sm sm:text-base">
             {REGRAS.teorica.totalQuestoes} questões · {REGRAS.teorica.duracaoMinutos} min · aprovação com {REGRAS.teorica.acertosMinimos} ou mais acertos
           </p>
-
-          {/* Estrada animada */}
-          <svg className="au d3 mx-auto mt-5 block w-full max-w-xs" viewBox="0 0 300 20" aria-hidden="true" height="20">
-            <line x1="0" y1="10" x2="300" y2="10" stroke="var(--border-2)" strokeWidth="2" strokeDasharray="14 12"
-              style={{ animation: "road 1.2s linear infinite" }} />
-          </svg>
         </div>
 
         <div className="glass au d3 space-y-6 p-5 sm:p-7">
@@ -77,15 +71,15 @@ export default function Home() {
                 style={{ width: 24, height: 24, background: colab ? "var(--p)" : "var(--surface-3)", color: colab ? "var(--p-fg)" : "var(--fg-faint)" }}>2</span>
               Categoria da prova
             </p>
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3" role="radiogroup" aria-label="Categoria da prova">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3" role="radiogroup" aria-label="Categoria da prova">
               {(Object.keys(CATEGORIAS) as Categoria[]).map((k) => {
                 const Ic = ICONE[k];
                 return (
                   <button key={k} type="button" role="radio" aria-checked={categoria === k}
                     onClick={() => setCategoria(k)}
-                    className="opt flex-col items-center gap-2 py-5 text-center" style={{ alignItems: "center" }}>
-                    <Ic width={28} height={28} style={{ color: categoria === k ? "var(--p)" : "var(--fg-muted)" }} />
-                    <span className="text-sm font-semibold">{CATEGORIAS[k]}</span>
+                    className="opt flex-row items-center gap-3.5 py-4 text-left sm:flex-col sm:gap-2 sm:py-5 sm:text-center" style={{ alignItems: "center" }}>
+                    <Ic width={28} height={28} style={{ flex: "none", color: categoria === k ? "var(--p)" : "var(--fg-muted)" }} />
+                    <span className="text-[0.95rem] font-semibold sm:text-sm">{CATEGORIAS[k]}</span>
                   </button>
                 );
               })}

@@ -1,6 +1,7 @@
 {
   "name": "escola-do-bom-condutor",
   "private": true,
+  "type": "module",
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "dev": "bun run --parallel dev:api dev:web dev:dash",

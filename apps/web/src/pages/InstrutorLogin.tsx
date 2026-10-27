@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import Fundo from "../components/Fundo";
-import { Escudo, SetaEsq } from "../components/Icones";
+import { SetaEsq } from "../components/Icones";
+import LogoNeon from "../components/LogoNeon";
 import { apiInstrutor, instrutorSessao } from "../lib/api";
 
 /** Login do instrutor (senha configurável em INSTRUTOR_SENHA na API). Ao entrar, abre a avaliação prática. */
@@ -34,9 +35,8 @@ export default function InstrutorLogin() {
       <Fundo />
       <section className="mx-auto max-w-sm">
         <div className="mb-7 text-center">
-          <div className="mx-auto mb-5 grid place-items-center rounded-[1.4rem]"
-            style={{ width: 72, height: 72, background: "var(--p)", color: "var(--p-fg)", animation: "popIn .7s cubic-bezier(.22,1,.36,1) both, ring 2.6s 1s ease-out infinite" }}>
-            <Escudo width={36} height={36} />
+          <div className="au mx-auto mb-4" style={{ width: "min(20rem, 76vw)" }}>
+            <LogoNeon className="logo-neon-tema" />
           </div>
           <h1 className="au d1 text-3xl font-extrabold tracking-tight">Área do instrutor</h1>
           <p className="au d2 muted mt-2 text-sm">Entre para registrar avaliações práticas.</p>

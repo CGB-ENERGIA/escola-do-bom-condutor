@@ -1,9 +1,4 @@
-/** Fundo animado (aurora + grade) usado nas telas de entrada. Fica atrás de todo o conteúdo. */
+/** Fundo minimalista da tela de entrada dos Relatórios: apenas um brilho suave e estático, sem animação. */
 export default function Fundo() {
-  return (
-    <>
-      <div className="aurora" aria-hidden="true"><i /><i /><i /></div>
-      <div className="grid-bg" aria-hidden="true" />
-    </>
-  );
+  return <div className="fundo-min" aria-hidden="true" />;
 }

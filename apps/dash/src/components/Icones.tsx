@@ -5,7 +5,24 @@ const base = (p: SVGProps<SVGSVGElement>) => ({
   strokeLinecap: "round" as const, strokeLinejoin: "round" as const, width: 20, height: 20, ...p,
 });
 
-export const Sol = (p: SVGProps<SVGSVGElement>) => (
+export const Engrenagem = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+);
+/** Ícone de detalhamento: documento com lupa. */
+export const Detalhe = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" /><path d="M14 3l5 5v2" /><path d="M14 3v5h5" /><path d="M8 13h3M8 17h2" /><circle cx="16.5" cy="16.5" r="3" /><path d="m21 21-2.4-2.4" /></svg>
+);
+/** Ícone de relatório com movimento: barras que sobem e linha de tendência que se desenha (animação em index.css). */
+export const Relatorio = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base({ strokeWidth: 2.2, ...p })} className={`relatorio-ico ${p.className ?? ""}`}>
+    <path d="M3 3v18h18" />
+    <rect className="rel-bar rel-b1" x="6.5" y="13" width="3" height="5" rx="1" fill="currentColor" stroke="none" />
+    <rect className="rel-bar rel-b2" x="11" y="9.5" width="3" height="8.5" rx="1" fill="currentColor" stroke="none" />
+    <rect className="rel-bar rel-b3" x="15.5" y="6" width="3" height="12" rx="1" fill="currentColor" stroke="none" />
+    <path className="rel-linha" d="M5.5 10.5 10 7l3.5 2.5L19 4.5" />
+  </svg>
+);
+export const Sol =(p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
 );
 export const Lua = (p: SVGProps<SVGSVGElement>) => (

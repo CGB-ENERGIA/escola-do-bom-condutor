@@ -174,7 +174,7 @@ export default function CameraEvidencia({ instrutor, colaborador, onConcluir, on
           )}
         </div>
 
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 p-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
           {!captura && gpsErro && <p className="alert text-xs" role="alert">{gpsErro} A foto será carimbada como "Localização indisponível".</p>}
           {erro && <p className="alert text-xs" role="alert">{erro}</p>}
           {captura && (

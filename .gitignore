@@ -4,3 +4,10 @@ dist
 data/*.db
 apps/api/data/
 *.log
+apps/api/api/index.js
+.vercel
+.env*.local
+/public
+.vercel
+.env*
+/server-dist

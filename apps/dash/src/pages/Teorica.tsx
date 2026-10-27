@@ -17,7 +17,7 @@ export default function Teorica() {
   const { f, set, alternar, passa } = ctl;
 
   const todas: Linha[] = useMemo(() => (dados?.registros ?? []).map((r) => ({
-    ...r, ...derivar(r.finalizadaEm, r.gerencia, r.base), ok: r.aprovado,
+    ...r, ...derivar(r.finalizadaEm, r.gerencia, r.base, r.coordenador), ok: r.aprovado, colabId: r.colaboradorId, colabNome: r.nome,
   })), [dados]);
 
   const linhas = todas.filter((l) => passa(l));
@@ -29,14 +29,14 @@ export default function Teorica() {
     .sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => ({ chave: k, rotulo: rotuloMes(k), valor: v.length }));
   const mesSel = f.ano && f.mes ? chaveMes(Number(f.ano), Number(f.mes)) : undefined;
 
-  const duplas = (campo: "baseK" | "gerenciaK", ign: "base" | "gerencia") =>
+  const duplas = (campo: "baseK" | "gerenciaK" | "coordK", ign: "base" | "gerencia" | "coordenador") =>
     agrupar(todas.filter((l) => passa(l, ign)), (l) => l[campo])
       .map(([k, v]) => ({ chave: k, rotulo: k, a: v.filter((l) => l.ok).length, b: v.filter((l) => !l.ok).length }))
       .sort((x, y) => y.a + y.b - (x.a + x.b));
-  const mediaPor = (campo: "baseK" | "gerenciaK", ign: "base" | "gerencia") =>
+  const mediaPor = (campo: "baseK" | "gerenciaK" | "coordK", ign: "base" | "gerencia" | "coordenador") =>
     agrupar(todas.filter((l) => passa(l, ign)), (l) => l[campo])
       .map(([k, v]) => ({ chave: k, rotulo: k, valor: media(v.map((l) => l.pontos)) })).sort((x, y) => y.valor - x.valor);
-  const ranking = agrupar(linhas, (l) => l.colaboradorId)
+  const ranking = agrupar(todas.filter((l) => passa(l, "colaborador")), (l) => l.colaboradorId)
     .map(([, v]) => ({ chave: v[0]!.colaboradorId, rotulo: v[0]!.nome, valor: media(v.map((l) => l.pontos)) }))
     .sort((a, b) => b.valor - a.valor || a.rotulo.localeCompare(b.rotulo));
 
@@ -67,7 +67,7 @@ export default function Teorica() {
 
           <div className="grid gap-4 lg:grid-cols-12">
             <Painel titulo="Avaliação por mês" className="lg:col-span-4">
-              <Barras itens={porMes} selecionado={mesSel}
+              <Barras itens={porMes} selecionado={mesSel} rotValor="Avaliações"
                 onSelecionar={(k) => (mesSel === k ? set({ ano: "", mes: "" }) : set({ ano: String(Number(k.slice(0, 4))), mes: String(Number(k.slice(5))) }))} />
             </Painel>
             <Painel titulo="Aptos vs Inaptos por Base" className="lg:col-span-4">
@@ -77,17 +77,24 @@ export default function Teorica() {
               <BarrasDuplas itens={duplas("gerenciaK", "gerencia")} rotA="Aptos" rotB="Inaptos" selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} />
             </Painel>
 
+            <Painel titulo="Aptos vs Inaptos por Coordenador" className="lg:col-span-6">
+              <BarrasDuplas itens={duplas("coordK", "coordenador")} rotA="Aptos" rotB="Inaptos" selecionado={f.coordenador} onSelecionar={(k) => alternar("coordenador", k)} />
+            </Painel>
+            <Painel titulo="Média por Coordenador" className="lg:col-span-6">
+              <Barras itens={mediaPor("coordK", "coordenador")} selecionado={f.coordenador} onSelecionar={(k) => alternar("coordenador", k)} cor="var(--p-h)" rotValor="Média" mostrarPct={false} />
+            </Painel>
+
             <Painel titulo="% de Inaptos" className="lg:col-span-3">
-              <Rosca pct={pctInaptos} rotulo={`${inaptos} de ${linhas.length}`} />
+              <Rosca pct={pctInaptos} rotulo={`${inaptos} de ${linhas.length}`} legenda={[{ rotulo: "Inaptos", valor: inaptos, cor: "var(--d)" }, { rotulo: "Aptos", valor: aptos, cor: "var(--p)" }]} />
             </Painel>
             <Painel titulo="Média por Base" className="lg:col-span-3">
-              <Barras itens={mediaPor("baseK", "base")} selecionado={f.base} onSelecionar={(k) => alternar("base", k)} cor="var(--p-h)" />
+              <Barras itens={mediaPor("baseK", "base")} selecionado={f.base} onSelecionar={(k) => alternar("base", k)} cor="var(--p-h)" rotValor="Média" mostrarPct={false} />
             </Painel>
             <Painel titulo="Média por Gerência" className="lg:col-span-3">
-              <Barras itens={mediaPor("gerenciaK", "gerencia")} selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} cor="var(--p-h)" />
+              <Barras itens={mediaPor("gerenciaK", "gerencia")} selecionado={f.gerencia} onSelecionar={(k) => alternar("gerencia", k)} cor="var(--p-h)" rotValor="Média" mostrarPct={false} />
             </Painel>
             <Painel titulo="Média de Avaliação" className="lg:col-span-3">
-              <Ranking itens={ranking} minimo={REGRAS.teorica.acertosMinimos} max={REGRAS.teorica.totalQuestoes} />
+              <Ranking itens={ranking} minimo={REGRAS.teorica.acertosMinimos} max={REGRAS.teorica.totalQuestoes} selecionado={f.colaborador} onSelecionar={(k) => alternar("colaborador", k)} />
             </Painel>
           </div>
           <p className="faint text-xs">Apto: {REGRAS.teorica.acertosMinimos} ou mais acertos de {REGRAS.teorica.totalQuestoes}. Barras vermelhas no ranking = abaixo do mínimo.</p>

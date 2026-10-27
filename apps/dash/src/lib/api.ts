@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { DashboardPraticaRes, DashboardTeoricaRes, LoginInstrutorRes } from "@ebc/shared";
+import type {
+  AusentesAcao, BaseColaboradoresRes, Colaborador, CruzamentoRes, DashboardPraticaRes, DashboardTeoricaRes, DetalheTeoricaRes, ImportacaoRes, LoginInstrutorRes,
+} from "@ebc/shared";
 
 async function json<T>(r: Response): Promise<T> {
   const body = await r.json().catch(() => ({}));
@@ -16,18 +18,35 @@ export const sessao = {
   limpar() { try { sessionStorage.removeItem(TOKEN); } catch { /* ignora */ } },
 };
 
-const auth = (): HeadersInit => {
+const auth = (): Record<string, string> => {
   const s = sessao.get();
   return s ? { Authorization: `Bearer ${s.token}` } : {};
 };
 
 export const api = {
   login: (usuario: string, senha: string) =>
-    fetch("/api/pratica/login", {
+    fetch("/api/dashboard/login", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario, senha }),
     }).then(json<LoginInstrutorRes>),
   teorica: (demo: boolean) =>
     fetch(`/api/dashboard/teorica${demo ? "?demo=1" : ""}`, { headers: auth(), cache: "no-store" }).then(json<DashboardTeoricaRes>),
+  teoricaDetalhe: (demo: boolean) =>
+    fetch(`/api/dashboard/teorica-detalhe${demo ? "?demo=1" : ""}`, { headers: auth(), cache: "no-store" }).then(json<DetalheTeoricaRes>),
+  /* ---- Configuração: base de colaboradores (administrador) ---- */
+  base: () => fetch("/api/dashboard/base", { headers: auth(), cache: "no-store" }).then(json<BaseColaboradoresRes>),
+  criarColaborador: (c: Partial<Colaborador> & { chapa: string }) =>
+    fetch("/api/dashboard/base", { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(c) }).then(json<Colaborador>),
+  editarColaborador: (id: string, c: Partial<Colaborador>) =>
+    fetch(`/api/dashboard/base/${encodeURIComponent(id)}`, { method: "PUT", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(c) }).then(json<Colaborador>),
+  excluirColaborador: (id: string) =>
+    fetch(`/api/dashboard/base/${encodeURIComponent(id)}`, { method: "DELETE", headers: auth() }).then(json<{ ok: boolean }>),
+  gerenteEmLote: (gerencia: string, base: string, gerente: string) =>
+    fetch("/api/dashboard/base/gerente", { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ gerencia, base, gerente }) }).then(json<{ atualizados: number }>),
+  importarBase: (arquivo: File, aplicar: boolean, ausentes: AusentesAcao) =>
+    fetch(`/api/dashboard/base/importar?aplicar=${aplicar ? 1 : 0}&ausentes=${ausentes}&nome=${encodeURIComponent(arquivo.name)}`,
+      { method: "POST", headers: auth(), body: arquivo }).then(json<ImportacaoRes>),
+  cruzamento: (demo: boolean) =>
+    fetch(`/api/dashboard/cruzamento${demo ? "?demo=1" : ""}`, { headers: auth(), cache: "no-store" }).then(json<CruzamentoRes>),
   pratica: (demo: boolean) =>
     fetch(`/api/dashboard/pratica${demo ? "?demo=1" : ""}`, { headers: auth(), cache: "no-store" }).then(json<DashboardPraticaRes>),
 };
@@ -56,7 +75,7 @@ export function useAtualizacao<T>(buscar: () => Promise<T>, chave: string) {
       setAtualizadoEm(new Date());
     } catch (e) {
       const msg = (e as Error).message;
-      if (msg.includes("Sessão")) { sessao.limpar(); window.location.assign("/login"); return; }
+      if (msg.includes("Sessão")) { sessao.limpar(); window.location.assign(`${import.meta.env.BASE_URL}login`); return; }
       setErro(msg);
     }
   }, []);

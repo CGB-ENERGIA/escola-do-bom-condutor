@@ -11,6 +11,7 @@ export default function InstrutorResultados() {
   const [programa, setPrograma] = useState("Escola do Bom Condutor");
   const [filtro, setFiltro] = useState("");
   const [aberta, setAberta] = useState<string>();
+  const [situacao, setSituacao] = useState<"" | "apto" | "inapto">("");
 
   useEffect(() => {
     if (!instrutorSessao.get()) return;
@@ -23,13 +24,16 @@ export default function InstrutorResultados() {
   if (!instrutorSessao.get()) return <Navigate to="/instrutor" replace />;
 
   const f = filtro.trim().toLowerCase();
-  const visiveis = (lista ?? []).filter((a) => !f || (a.colaborador?.nome ?? "").toLowerCase().includes(f));
-  const aptos = visiveis.filter((a) => a.resultado.apto).length;
+  // Os contadores respeitam só o filtro de nome; a situação (Apto/Inapto) filtra a lista abaixo.
+  const doNome = (lista ?? []).filter((a) => !f || (a.colaborador?.nome ?? "").toLowerCase().includes(f));
+  const aptos = doNome.filter((a) => a.resultado.apto).length;
+  const visiveis = doNome.filter((a) => !situacao || (situacao === "apto") === a.resultado.apto);
+  const alternarSituacao = (s: "apto" | "inapto") => setSituacao((atual) => (atual === s ? "" : s));
 
   return (
     <section className="space-y-5">
-      <div className="au flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Resultados <span className="faint font-semibold">· prática</span></h1>
+      <div className="au flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Resultados <span className="faint font-semibold">· prática</span></h1>
         <div className="flex gap-2">
           <Link to="/instrutor/dashboard" className="btn btn-g !px-4 !py-2.5 !text-sm"><Grafico width={16} height={16} /> Dashboard</Link>
           <Link to="/instrutor/avaliacao" className="btn btn-p !px-4 !py-2.5 !text-sm"><Mais width={16} height={16} /> Nova</Link>
@@ -57,16 +61,25 @@ export default function InstrutorResultados() {
       {lista && (
         <>
           <div className="au d2 grid grid-cols-3 gap-3">
-            {[
-              { rot: "Avaliações", val: visiveis.length, cor: "var(--fg)" },
-              { rot: "Aptos", val: aptos, cor: "var(--p)" },
-              { rot: "Inaptos", val: visiveis.length - aptos, cor: "var(--d)" },
-            ].map((s) => (
-              <div key={s.rot} className="card p-4 text-center">
-                <p className="text-3xl font-extrabold" style={{ color: s.cor, fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
-                <p className="muted mt-0.5 text-xs font-medium">{s.rot}</p>
-              </div>
-            ))}
+            {([
+              { rot: "Avaliações", val: doNome.length, cor: "var(--fg)", alvo: "" as const },
+              { rot: "Aptos", val: aptos, cor: "var(--p)", alvo: "apto" as const },
+              { rot: "Inaptos", val: doNome.length - aptos, cor: "var(--d)", alvo: "inapto" as const },
+            ]).map((s) => {
+              const ativo = situacao === s.alvo;
+              return (
+                <button key={s.rot} type="button" onClick={() => (s.alvo ? alternarSituacao(s.alvo) : setSituacao(""))}
+                  aria-pressed={ativo} title={s.alvo ? (ativo ? "Remover filtro" : `Mostrar só ${s.rot.toLowerCase()}`) : "Mostrar todas"}
+                  className="card p-4 text-center transition-all" style={{
+                    cursor: "pointer", font: "inherit", color: "inherit",
+                    borderColor: ativo ? s.cor : undefined, boxShadow: ativo ? `0 0 0 3px color-mix(in srgb, ${s.cor} 22%, transparent)` : undefined,
+                    opacity: situacao && !ativo ? 0.5 : 1,
+                  }}>
+                  <p className="text-3xl font-extrabold" style={{ color: s.cor, fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
+                  <p className="muted mt-0.5 text-xs font-medium">{s.rot}</p>
+                </button>
+              );
+            })}
           </div>
 
           <ul className="space-y-2.5">
@@ -85,7 +98,12 @@ export default function InstrutorResultados() {
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className={`chip ${a.resultado.apto ? "chip-ok" : "chip-bad"}`}>{a.resultado.apto ? "APTO" : "INAPTO"}</span>
+                      <span role="button" tabIndex={0} className={`chip ${a.resultado.apto ? "chip-ok" : "chip-bad"}`} style={{ cursor: "pointer" }}
+                        title={`Filtrar só ${a.resultado.apto ? "aptos" : "inaptos"}`}
+                        onClick={(e) => { e.stopPropagation(); alternarSituacao(a.resultado.apto ? "apto" : "inapto"); }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); alternarSituacao(a.resultado.apto ? "apto" : "inapto"); } }}>
+                        {a.resultado.apto ? "APTO" : "INAPTO"}
+                      </span>
                       <Chevron className="faint transition-transform duration-200" width={18} height={18}
                         style={{ transform: aberto ? "rotate(180deg)" : undefined }} />
                     </span>
