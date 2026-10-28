@@ -91,6 +91,15 @@ export class PgRepository implements Repository {
     return (await this.sql<{ dados: Tentativa }[]>`select dados from tentativas order by iniciada_em`).map((r) => r.dados);
   }
 
+  async excluirTentativa(id: string) {
+    await this.iniciar();
+    return (await this.sql`delete from tentativas where id = ${id}`).count > 0;
+  }
+  async excluirAvaliacaoPratica(id: string) {
+    await this.iniciar();
+    return (await this.sql`delete from avaliacoes_praticas where id = ${id}`).count > 0;
+  }
+
   async salvarAvaliacaoPratica(a: AvaliacaoPratica) {
     await this.iniciar();
     await this.sql`insert into avaliacoes_praticas (id, realizada_em, dados) values (${a.id}, ${a.realizadaEm}, ${this.sql.json(a as never)})

@@ -107,6 +107,14 @@ export class SupabaseRepository implements Repository {
       .sort((a, b) => a.iniciadaEm.localeCompare(b.iniciadaEm));
   }
 
+  private async apagar(tabela: string, id: string) {
+    await this.iniciar();
+    const r = await this.req(`${tabela}?id=eq.${encodeURIComponent(id)}&select=id`, { method: "DELETE", prefer: "return=representation" });
+    return ((await r.json()) as unknown[]).length > 0;
+  }
+  excluirTentativa(id: string) { return this.apagar("tentativas", id); }
+  excluirAvaliacaoPratica(id: string) { return this.apagar("avaliacoes_praticas", id); }
+
   async salvarAvaliacaoPratica(a: AvaliacaoPratica) {
     await this.iniciar();
     await this.gravar("avaliacoes_praticas", [{ id: a.id, realizada_em: a.realizadaEm, dados: a }]);

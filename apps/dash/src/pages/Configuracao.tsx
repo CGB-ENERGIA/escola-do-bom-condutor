@@ -18,7 +18,7 @@ const corSituacao = (s?: string | null) =>
   s === "ATIVO" ? "chip-ok" : s === "FÉRIAS" || s === "AFASTADO" ? "chip-warn" : s === "DESLIGADO" || s === "FORA DA BASE" ? "chip-bad" : "";
 
 /** Janela de diálogo simples (fecha com Esc ou clicando fora). */
-function Modal({ titulo, onFechar, children, largo }: { titulo: string; onFechar: () => void; children: ReactNode; largo?: boolean }) {
+export function Modal({ titulo, onFechar, children, largo }: { titulo: string; onFechar: () => void; children: ReactNode; largo?: boolean }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") onFechar(); };
     window.addEventListener("keydown", k);

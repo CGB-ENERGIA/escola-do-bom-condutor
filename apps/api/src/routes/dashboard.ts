@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import {
   CRITERIOS_PRATICOS, REGRAS, avaliarPratica,
-  type AusentesAcao, type BaseColaboradoresRes, type Colaborador, type Categoria, type CruzamentoRes, type DashboardPraticaRes, type DashboardTeoricaRes, type DetalheTeoricaRes, type LoginInstrutorReq,
+  type AusentesAcao, type AvaliacaoPratica, type BaseColaboradoresRes, type Colaborador, type Categoria, type CruzamentoRes, type DashboardPraticaRes, type DashboardTeoricaRes, type DetalheTeoricaRes, type LoginInstrutorReq,
   type Ocorrencia, type QuestaoCatalogo, type RegistroCruzamento, type RegistroPratico, type RegistroTeorico, type RegistroTeoricoDetalhe,
   type ResumoAvaliacao,
 } from "@ebc/shared";
@@ -153,6 +153,68 @@ export function dashboardRoutes(repo: Repository) {
       if (e instanceof ErroPlanilha) return c.json({ erro: e.message }, 400);
       throw e;
     }
+  });
+
+  /* ---------- Banco de dados das provas: editar e excluir avaliações já realizadas (só administrador) ---------- */
+  app.use("/provas/*", exigirAdmin);
+  const data = (v: unknown) => { const d = typeof v === "string" && v ? new Date(v) : null; return d && !isNaN(+d) ? d.toISOString() : null; };
+  const corpo = async (c: { req: { json(): Promise<unknown> } }) => ((await c.req.json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+  const chaveColab = async (v: unknown, atual: string) => {
+    const id = txt(v) ?? atual;
+    return id === atual || (await repo.getColaborador(id)) ? id : null;
+  };
+
+  /** PUT /api/dashboard/provas/teorica/:id { colaboradorId, categoria, pontos, finalizadaEm } -> corrige a prova (resultado recalculado). */
+  app.put("/provas/teorica/:id", async (c) => {
+    if (!editavel()) return c.json(somenteLeitura, 409);
+    const t = await repo.getTentativa(c.req.param("id"));
+    if (!t || !t.resultado) return c.json({ erro: "Prova não encontrada." }, 404);
+    const b = await corpo(c);
+    const colaboradorId = await chaveColab(b.colaboradorId, t.colaboradorId);
+    if (!colaboradorId) return c.json({ erro: "Colaborador não encontrado na base." }, 400);
+    const categoria = (txt(b.categoria) ?? t.categoria) as Categoria;
+    if (!["carro", "caminhao", "moto"].includes(categoria)) return c.json({ erro: "Categoria inválida." }, 400);
+    const pontos = Number(b.pontos ?? t.resultado.pontos);
+    if (!Number.isInteger(pontos) || pontos < 0 || pontos > t.resultado.pontosMaximos) return c.json({ erro: `A pontuação deve ficar entre 0 e ${t.resultado.pontosMaximos}.` }, 400);
+    const finalizadaEm = data(b.finalizadaEm) ?? t.finalizadaEm;
+    const aprovado = pontos >= REGRAS.teorica.acertosMinimos;
+    const novo = { ...t, colaboradorId, categoria, finalizadaEm, resultado: { ...t.resultado, acertos: pontos, pontos, aprovado, status: aprovado ? "aprovado" as const : "reprovado" as const } };
+    await repo.salvarTentativa(novo);
+    return c.json({ ok: true });
+  });
+
+  app.delete("/provas/teorica/:id", async (c) => {
+    if (!editavel()) return c.json(somenteLeitura, 409);
+    return (await repo.excluirTentativa(c.req.param("id"))) ? c.json({ ok: true }) : c.json({ erro: "Prova não encontrada." }, 404);
+  });
+
+  /** PUT /api/dashboard/provas/pratica/:id -> corrige a avaliação prática (aptidão recalculada pelas infrações). */
+  app.put("/provas/pratica/:id", async (c) => {
+    if (!editavel()) return c.json(somenteLeitura, 409);
+    const a = (await repo.listarAvaliacoesPraticas()).find((x) => x.id === c.req.param("id"));
+    if (!a) return c.json({ erro: "Avaliação não encontrada." }, 404);
+    const b = await corpo(c);
+    const colaboradorId = await chaveColab(b.colaboradorId, a.colaboradorId);
+    if (!colaboradorId) return c.json({ erro: "Colaborador não encontrado na base." }, 400);
+    const tipo = b.tipo === "reteste" ? "reteste" : "primeira";
+    const veiculo = txt(b.veiculo) as AvaliacaoPratica["veiculo"];
+    if (veiculo && !["carro", "caminhao", "moto"].includes(veiculo)) return c.json({ erro: "Veículo inválido." }, 400);
+    const programa = txt(b.programa) === "De Olho na Condução" ? "De Olho na Condução" : "Escola do Bom Condutor";
+    const ocorrencias: Ocorrencia[] = (Array.isArray(b.ocorrencias) ? b.ocorrencias : [])
+      .map((o) => ({ criterioId: String((o as Ocorrencia).criterioId), quantidade: Math.floor(Number((o as Ocorrencia).quantidade)) }))
+      .filter((o) => o.quantidade > 0 && CRITERIOS_PRATICOS.some((x) => x.id === o.criterioId));
+    const realizadaEm = data(b.realizadaEm) ?? a.realizadaEm;
+    const novo: AvaliacaoPratica = {
+      ...a, colaboradorId, tipo, veiculo: veiculo ?? a.veiculo, programa, ocorrencias, descricao: txt(b.descricao) ?? "",
+      avaliador: txt(b.avaliador) ?? a.avaliador, realizadaEm, resultado: avaliarPratica(ocorrencias),
+    };
+    await repo.salvarAvaliacaoPratica(novo);
+    return c.json({ ok: true });
+  });
+
+  app.delete("/provas/pratica/:id", async (c) => {
+    if (!editavel()) return c.json(somenteLeitura, 409);
+    return (await repo.excluirAvaliacaoPratica(c.req.param("id"))) ? c.json({ ok: true }) : c.json({ erro: "Avaliação não encontrada." }, 404);
   });
 
   /** GET /api/dashboard/teorica[?demo=1] -> provas teóricas finalizadas (os filtros são aplicados no navegador). */

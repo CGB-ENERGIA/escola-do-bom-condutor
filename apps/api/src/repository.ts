@@ -20,8 +20,10 @@ export interface Repository {
   salvarTentativa(t: Tentativa): Promise<void>;
   getTentativa(id: string): Promise<Tentativa | undefined>;
   listarTentativas(): Promise<Tentativa[]>;
+  excluirTentativa(id: string): Promise<boolean>;
   salvarAvaliacaoPratica(a: AvaliacaoPratica): Promise<void>;
   listarAvaliacoesPraticas(): Promise<AvaliacaoPratica[]>;
+  excluirAvaliacaoPratica(id: string): Promise<boolean>;
   salvarEvidencia(meta: Evidencia, imagem: Uint8Array): Promise<void>;
   getEvidencia(id: string): Promise<Evidencia | null>;
   getEvidenciaImagem(id: string): Promise<Uint8Array | null>;
@@ -67,8 +69,10 @@ export class MemoryRepository implements Repository {
   async salvarTentativa(t: Tentativa) { this.tentativas.set(t.id, t); }
   async getTentativa(id: string) { return this.tentativas.get(id); }
   async listarTentativas() { return [...this.tentativas.values()]; }
+  async excluirTentativa(id: string) { return this.tentativas.delete(id); }
   async salvarAvaliacaoPratica(a: AvaliacaoPratica) { this.praticas.set(a.id, a); }
   async listarAvaliacoesPraticas() { return [...this.praticas.values()]; }
+  async excluirAvaliacaoPratica(id: string) { return this.praticas.delete(id); }
 
   async salvarEvidencia(meta: Evidencia, imagem: Uint8Array) {
     await mkdir(PASTA, { recursive: true });

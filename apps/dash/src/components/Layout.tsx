@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Detalhe, Engrenagem, Grafico, Lista, Lua, Relatorio, Sair, Sol, Volante } from "./Icones";
+import { Banco, Detalhe, Engrenagem, Grafico, Lista, Lua, Relatorio, Sair, Sol, Volante } from "./Icones";
 import { sessao } from "../lib/api";
 import { useTema } from "../lib/theme";
 
@@ -9,6 +9,7 @@ const MENU = [
   { to: "/teorica", rot: "Avaliação Teórica", Icone: Lista },
   { to: "/pratica", rot: "Avaliação Prática", Icone: Volante },
   { to: "/detalhamento", rot: "Detalhamento", Icone: Detalhe },
+  { to: "/banco-de-dados", rot: "Banco de dados", Icone: Banco },
   { to: "/configuracao", rot: "Configuração", Icone: Engrenagem },
 ];
 

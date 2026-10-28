@@ -45,6 +45,11 @@ export const api = {
   importarBase: (arquivo: File, aplicar: boolean, ausentes: AusentesAcao) =>
     fetch(`/api/dashboard/base/importar?aplicar=${aplicar ? 1 : 0}&ausentes=${ausentes}&nome=${encodeURIComponent(arquivo.name)}`,
       { method: "POST", headers: auth(), body: arquivo }).then(json<ImportacaoRes>),
+  /* ---- Banco de dados das provas: editar / excluir (administrador) ---- */
+  editarProva: (tipo: "teorica" | "pratica", id: string, corpo: object) =>
+    fetch(`/api/dashboard/provas/${tipo}/${encodeURIComponent(id)}`, { method: "PUT", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(corpo) }).then(json<{ ok: boolean }>),
+  excluirProva: (tipo: "teorica" | "pratica", id: string) =>
+    fetch(`/api/dashboard/provas/${tipo}/${encodeURIComponent(id)}`, { method: "DELETE", headers: auth() }).then(json<{ ok: boolean }>),
   cruzamento: (demo: boolean) =>
     fetch(`/api/dashboard/cruzamento${demo ? "?demo=1" : ""}`, { headers: auth(), cache: "no-store" }).then(json<CruzamentoRes>),
   pratica: (demo: boolean) =>
