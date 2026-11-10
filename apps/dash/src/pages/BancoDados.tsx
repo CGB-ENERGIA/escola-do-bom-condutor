@@ -5,6 +5,7 @@ import {
   type Ocorrencia, type RegistroPratico, type RegistroTeorico,
 } from "@ebc/shared";
 import { api, sessao } from "../lib/api";
+import { Ferramentas } from "../components/Layout";
 import { Indicadores } from "../lib/filtros";
 import { Modal } from "./Configuracao";
 
@@ -74,9 +75,12 @@ export default function BancoDados() {
 
   return (
     <section className="space-y-5">
-      <div className="au">
-        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Banco de dados <span style={{ color: "var(--p)" }}>· provas</span></h1>
-        <p className="muted mt-1 text-sm">Corrija ou exclua as avaliações realizadas pelos colaboradores (teórica) e pelos instrutores (prática).</p>
+      <div className="au flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Banco de dados <span style={{ color: "var(--p)" }}>· provas</span></h1>
+          <p className="muted mt-1 text-sm">Corrija ou exclua as avaliações realizadas pelos colaboradores (teórica) e pelos instrutores (prática).</p>
+        </div>
+        <Ferramentas />
       </div>
 
       {aviso && <p className="chip chip-ok af" role="status" style={{ padding: ".6rem .9rem", fontSize: ".8rem" }}>{aviso}</p>}

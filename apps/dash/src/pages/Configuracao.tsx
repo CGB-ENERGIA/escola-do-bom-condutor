@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { useNavigate } from "react-router-dom";
 import type { AusentesAcao, BaseColaboradoresRes, Colaborador, ImportacaoRes } from "@ebc/shared";
 import { Fechar } from "../components/Icones";
+import { Ferramentas } from "../components/Layout";
 import { api, sessao } from "../lib/api";
 import { baixarCsv } from "../lib/csv";
 import { Indicadores } from "../lib/filtros";
@@ -107,7 +108,8 @@ export default function Configuracao() {
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Configuração <span style={{ color: "var(--p)" }}>· colaboradores</span></h1>
           <p className="muted mt-1 text-sm">Base de colaboradores usada na prova, na ficha do instrutor e nos relatórios.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Ferramentas />
           <button className="btn btn-p !py-2.5 !text-sm" disabled={!editavel} onClick={() => setAba({ t: "colab" })}>+ Novo colaborador</button>
           <button className="btn btn-g !py-2.5 !text-sm" onClick={() => setAba({ t: "importar" })}>Importar planilha</button>
           <button className="btn btn-g !py-2.5 !text-sm" onClick={exportar} disabled={filtrados.length === 0}>Exportar CSV</button>

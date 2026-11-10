@@ -29,6 +29,10 @@ export const Relatorio = (p: SVGProps<SVGSVGElement>) => (
 export const Sol =(p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
 );
+/** Tela cheia: setas para fora (entrar) e para dentro (sair). */
+export const TelaCheia = ({ sair, ...p }: SVGProps<SVGSVGElement> & { sair?: boolean }) => (
+  <svg {...base(p)}>{sair ? <path d="M9 4v3a2 2 0 0 1-2 2H4M15 4v3a2 2 0 0 0 2 2h3M9 20v-3a2 2 0 0 0-2-2H4M15 20v-3a2 2 0 0 1 2-2h3" /> : <path d="M4 9V6a2 2 0 0 1 2-2h3M20 9V6a2 2 0 0 0-2-2h-3M4 15v3a2 2 0 0 0 2 2h3M20 15v3a2 2 0 0 1-2 2h-3" />}</svg>
+);
 export const Lua = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
 );

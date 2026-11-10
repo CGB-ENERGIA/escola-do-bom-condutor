@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Banco, Detalhe, Engrenagem, Grafico, Lista, Lua, Relatorio, Sair, Sol, Volante } from "./Icones";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Banco, Detalhe, Engrenagem, Grafico, Lista, Lua, Relatorio, Sair, Sol, TelaCheia, Volante } from "./Icones";
 import { sessao } from "../lib/api";
 import { useTema } from "../lib/theme";
 
@@ -25,11 +25,26 @@ const IconeMenu = ({ recolhido }: { recolhido: boolean }) => (
   </svg>
 );
 
+/** Tela cheia do navegador (some onde não há suporte, como o iPhone). */
+function useTelaCheia() {
+  const [ativa, setAtiva] = useState(() => typeof document !== "undefined" && !!document.fullscreenElement);
+  useEffect(() => {
+    const f = () => setAtiva(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", f);
+    return () => document.removeEventListener("fullscreenchange", f);
+  }, []);
+  const suportado = typeof document !== "undefined" && !!document.fullscreenEnabled;
+  const alternar = () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    else void document.documentElement.requestFullscreen().catch(() => undefined);
+  };
+  return { ativa, suportado, alternar };
+}
+
 /** Estrutura do painel: menu lateral recolhível (Dash, Teórica, Prática) + conteúdo. No celular o menu vira abas no topo. */
 export default function Layout() {
   const nav = useNavigate();
   const { search } = useLocation();
-  const { tema, alternar } = useTema();
   const s = sessao.get();
   const [recolhido, setRecolhido] = useState(lerRecolhido);
 
@@ -71,9 +86,6 @@ export default function Layout() {
           <div className={`flex items-center gap-2 lg:mt-auto lg:flex-col lg:items-stretch`}>
             {s && <p className={`muted hidden text-xs lg:block ${oculto}`}>Conectado como <strong style={{ color: "var(--fg)" }}>{s.nome}</strong></p>}
             <div className={`flex gap-2 ${recolhido ? "lg:flex-col lg:items-center" : ""}`}>
-              <button className="icon-btn" onClick={alternar} aria-label="Alternar tema" title="Alternar tema">
-                {tema === "dark" ? <Sol width={18} height={18} /> : <Lua width={18} height={18} />}
-              </button>
               <button className={`btn btn-g !px-3 !py-2 !text-sm ${recolhido ? "lg:!h-10 lg:!w-10 lg:!p-0" : "lg:flex-1"}`}
                 onClick={() => { sessao.limpar(); nav("/login"); }} title="Sair" aria-label="Sair">
                 <Sair width={16} height={16} /> <span className={oculto}>Sair</span>
@@ -113,11 +125,29 @@ export default function Layout() {
   );
 }
 
+/** Botões do canto superior direito: tema claro/escuro e tela cheia. */
+export function Ferramentas() {
+  const { tema, alternar } = useTema();
+  const tela = useTelaCheia();
+  return (
+    <div className="flex items-center gap-2">
+      <button type="button" className="icon-btn" onClick={alternar} aria-label="Alternar tema" title="Alternar tema">
+        {tema === "dark" ? <Sol width={18} height={18} /> : <Lua width={18} height={18} />}
+      </button>
+      {tela.suportado && (
+        <button type="button" className="icon-btn" onClick={tela.alternar} aria-pressed={tela.ativa}
+          aria-label={tela.ativa ? "Sair da tela cheia" : "Tela cheia"} title={tela.ativa ? "Sair da tela cheia (Esc)" : "Tela cheia"}>
+          <TelaCheia sair={tela.ativa} width={18} height={18} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** Título da página + selo "ao vivo" com a hora da última atualização automática. */
-export function CabecalhoPagina({ titulo, destaque, sub, atualizadoEm, demo, children }: {
-  titulo: string; destaque: string; sub: string; atualizadoEm?: Date; demo: boolean; children?: ReactNode;
+export function CabecalhoPagina({ titulo, destaque, sub, atualizadoEm, children }: {
+  titulo: string; destaque: string; sub: string; atualizadoEm?: Date; demo?: boolean; children?: ReactNode;
 }) {
-  const [, setParams] = useSearchParams();
   const [, forcar] = useState(0);
   useEffect(() => { const t = setInterval(() => forcar((n) => n + 1), 1000); return () => clearInterval(t); }, []);
   const hora = atualizadoEm?.toLocaleTimeString("pt-BR");
@@ -129,12 +159,10 @@ export function CabecalhoPagina({ titulo, destaque, sub, atualizadoEm, demo, chi
       </div>
       <div className="flex flex-wrap items-center gap-3">
         {children}
-        <label className="muted flex cursor-pointer items-center gap-2 text-xs font-semibold">
-          <input type="checkbox" checked={demo} onChange={(e) => setParams(e.target.checked ? { demo: "1" } : {}, { replace: true })} /> Dados de demonstração
-        </label>
         <span className="chip chip-ok" title="Os relatórios se atualizam sozinhos quando uma avaliação é finalizada.">
           <span className="live" /> Ao vivo · {hora ?? "…"}
         </span>
+        <Ferramentas />
       </div>
     </div>
   );
