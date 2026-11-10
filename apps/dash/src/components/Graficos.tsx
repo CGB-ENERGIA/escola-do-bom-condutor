@@ -1,4 +1,5 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export const fmt = (n: number, d = 1) => n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: d });
 const pct = (parte: number, total: number) => (total ? `${fmt((parte / total) * 100)}%` : "—");
@@ -13,7 +14,8 @@ function TipCard({ x, y, titulo, cor, linhas }: TipDados) {
   const h = typeof window === "undefined" ? 800 : window.innerHeight;
   const left = x + 18 > w - 240 ? Math.max(8, x - 18 - 220) : x + 18;
   const top = y + 18 > h - 40 - 34 * (linhas.length + 1) ? Math.max(8, y - 28 - 34 * (linhas.length + 1)) : y + 18;
-  return (
+  // Portal no body: os cartões do painel têm transform/animação, que prendem o "fixed" ao cartão e o escondem atrás dos vizinhos.
+  return createPortal(
     <div className="tip" style={{ left, top }} role="tooltip">
       <p className="tip-t">
         {cor && <i style={{ background: cor }} />}
@@ -27,7 +29,8 @@ function TipCard({ x, y, titulo, cor, linhas }: TipDados) {
           </div>
         ))}
       </dl>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
