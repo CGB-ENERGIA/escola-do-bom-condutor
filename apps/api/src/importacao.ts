@@ -2,6 +2,15 @@ import type { AusentesAcao, Colaborador, ImportacaoRes } from "@ebc/shared";
 import { lerPlanilha, type Tabela } from "./planilha";
 
 const norm = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase().replace(/\s+/g, " ").trim();
+/** Nome no padrão da base: maiúsculas, sem acento e sem espaços repetidos. Com acento ou sem, é a mesma pessoa. */
+export const normNome = (s: string) => norm(s);
+/** Chave para comparar nomes: também ignora pontuação (ponto, apóstrofo, hífen). */
+const chaveNome = (s: string) => norm(s).replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+/** Colaborador (de outra chapa) que já tem esse nome, ignorando acento, maiúsculas, pontuação e espaços. */
+export const mesmoNome = (lista: Colaborador[], nome: string, ignorarId?: string) => {
+  const k = chaveNome(nome);
+  return lista.find((c) => c.id !== ignorarId && chaveNome(c.nome) === k);
+};
 const texto = (v: string | number | null | undefined) => (v === null || v === undefined ? null : String(v).trim() || null);
 
 /** Nomes por extenso das bases viram a sigla usada em todo o sistema. */
@@ -51,7 +60,7 @@ export function converter(tabela: Tabela) {
     const ex = porChapa.get(chapa);
     if (ex) { duplicados++; if (processo && !ex._processos.includes(processo)) ex._processos.push(processo); continue; }
     porChapa.set(chapa, {
-      id: chapa, matricula: chapa, nome,
+      id: chapa, matricula: chapa, nome: normNome(nome) || nome,
       funcao: ix.funcao! >= 0 ? texto(l[ix.funcao!]) : null,
       base: ix.base! >= 0 ? siglaBase(texto(l[ix.base!])) : null,
       gerencia: ix.gerencia! >= 0 ? texto(l[ix.gerencia!])?.toUpperCase() ?? null : null,
@@ -69,6 +78,9 @@ export function converter(tabela: Tabela) {
 }
 
 const igual = (a: unknown, b: unknown) => (a ?? null) === (b ?? null);
+/** Para o nome, acento e maiúsculas não contam como mudança. */
+const igualCampo = (k: keyof Colaborador, a: Colaborador, b: Colaborador) =>
+  k === "nome" ? chaveNome(a.nome) === chaveNome(b.nome) : igual(a[k], b[k]);
 
 /**
  * Coordenador que um colaborador novo herda: o mais comum entre quem já está na mesma gerência e base
@@ -106,16 +118,26 @@ export async function importar(opts: {
   const atual = new Map(opts.atual.map((c) => [c.id, c]));
   const novos: Colaborador[] = [];
   const alterados: ImportacaoRes["alterados"] = [];
+  const avisos: string[] = [];
   let semMudanca = 0;
+  // mesmo nome em duas chapas da própria planilha
+  const nomesPlanilha = new Map<string, Colaborador>();
+  for (const n of lista) {
+    const k = chaveNome(n.nome), outro = nomesPlanilha.get(k);
+    if (outro) avisos.push(`Na planilha, as chapas ${outro.id} e ${n.id} têm o mesmo nome (${n.nome}). Confira se não é a mesma pessoa.`);
+    else nomesPlanilha.set(k, n);
+  }
   for (const n of lista) {
     const a = atual.get(n.id);
     if (!a) {
+      const dup = mesmoNome(opts.atual, n.nome);
+      if (dup) avisos.push(`Chapa nova ${n.id} (${n.nome}) tem o mesmo nome da chapa ${dup.id}${dup.situacao && dup.situacao !== "ATIVO" ? ` (${dup.situacao})` : ""}. Pode ser a mesma pessoa com chapa trocada.`);
       // sem coluna de coordenador na planilha: o novo colaborador herda o da gerência/base
       if (!n.gerente) { const g = gerentePadrao(opts.atual, n.gerencia, n.base); if (g) n.gerente = g; }
       novos.push(n); continue;
     }
     // campos que a planilha não traz (ex.: coordenador) ficam como estão na base
-    const campos = CAMPOS.filter((k) => (k !== "gerente" || temColuna("gerente")) && !igual(a[k], n[k]));
+    const campos = CAMPOS.filter((k) => (k !== "gerente" || temColuna("gerente")) && !igualCampo(k, a, n));
     if (campos.length === 0) { semMudanca++; continue; }
     const depois: Colaborador = { ...a };
     for (const k of campos) (depois as Record<string, unknown>)[k] = n[k] ?? null;
@@ -135,6 +157,6 @@ export async function importar(opts: {
   }
   return {
     aplicada: opts.aplicar, arquivo: { nome: opts.nomeArquivo, linhas, validos: lista.length, duplicados, ignorados },
-    novos, alterados, ausentes, semMudanca,
+    novos, alterados, ausentes, semMudanca, avisos,
   };
 }

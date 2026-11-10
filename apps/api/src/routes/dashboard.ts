@@ -6,7 +6,7 @@ import {
   type ResumoAvaliacao,
 } from "@ebc/shared";
 import { exigirAdmin, exigirPainel, loginPainel } from "../auth";
-import { ErroPlanilha, gerentePadrao, importar, siglaBase } from "../importacao";
+import { ErroPlanilha, gerentePadrao, importar, mesmoNome, normNome, siglaBase } from "../importacao";
 import type { Repository } from "../repository";
 import { colaboradores } from "../seed";
 
@@ -67,7 +67,7 @@ export function dashboardRoutes(repo: Repository) {
   const somenteLeitura = { erro: "O banco de dados ainda não está configurado: as alterações não seriam guardadas. Configure o DATABASE_URL e tente de novo." };
   const txt = (v: unknown) => (typeof v === "string" ? v.trim() || null : null);
   const campos = (b: Record<string, unknown>) => ({
-    nome: txt(b.nome)?.toUpperCase() ?? null,
+    nome: txt(b.nome) ? normNome(txt(b.nome)!) : null,
     funcao: txt(b.funcao)?.toUpperCase() ?? null,
     base: siglaBase(txt(b.base)),
     gerencia: txt(b.gerencia)?.toUpperCase() ?? null,
@@ -91,8 +91,11 @@ export function dashboardRoutes(repo: Repository) {
     if (!chapa || !/^[A-Za-z0-9._-]{1,20}$/.test(chapa)) return c.json({ erro: "Informe a chapa (letras e números, até 20 caracteres)." }, 400);
     if (!f.nome) return c.json({ erro: "Informe o nome do colaborador." }, 400);
     if (await repo.getColaborador(chapa)) return c.json({ erro: `Já existe um colaborador com a chapa ${chapa}.` }, 409);
+    const todos = await repo.listarColaboradores();
+    const dup = mesmoNome(todos, f.nome);
+    if (dup && b.confirmar !== true) return c.json({ erro: `Já existe um colaborador com este nome (chapa ${dup.id}${dup.situacao && dup.situacao !== "ATIVO" ? `, ${dup.situacao}` : ""}). Acento e maiúsculas não diferenciam pessoas. Confirme se são pessoas diferentes.`, duplicado: true }, 409);
     // sem gerente informado: herda o da gerência/base
-    const gerente = f.gerente ?? gerentePadrao(await repo.listarColaboradores(), f.gerencia, f.base);
+    const gerente = f.gerente ?? gerentePadrao(todos, f.gerencia, f.base);
     const novo: Colaborador = { id: chapa, matricula: chapa, ...f, gerente, nome: f.nome };
     await repo.salvarColaborador(novo);
     return c.json(novo, 201);
@@ -103,8 +106,11 @@ export function dashboardRoutes(repo: Repository) {
     if (!editavel()) return c.json(somenteLeitura, 409);
     const atual = await repo.getColaborador(c.req.param("id"));
     if (!atual) return c.json({ erro: "Colaborador não encontrado." }, 404);
-    const f = campos((await c.req.json().catch(() => ({}))) as Record<string, unknown>);
+    const b = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+    const f = campos(b);
     if (!f.nome) return c.json({ erro: "Informe o nome do colaborador." }, 400);
+    const dup = mesmoNome(await repo.listarColaboradores(), f.nome, atual.id);
+    if (dup && b.confirmar !== true) return c.json({ erro: `Já existe outro colaborador com este nome (chapa ${dup.id}). Acento e maiúsculas não diferenciam pessoas. Confirme se são pessoas diferentes.`, duplicado: true }, 409);
     const novo: Colaborador = { ...atual, ...f, nome: f.nome };
     await repo.salvarColaborador(novo);
     return c.json(novo);

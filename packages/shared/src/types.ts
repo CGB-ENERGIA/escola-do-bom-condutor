@@ -189,6 +189,8 @@ export type ImportacaoRes = {
   alterados: { antes: Colaborador; depois: Colaborador; campos: string[] }[];
   ausentes: Colaborador[];
   semMudanca: number;
+  /** Alertas de possível duplicidade (mesmo nome em chapas diferentes, ignorando acento). */
+  avisos: string[];
 };
 
 /** Resumo da última avaliação de um colaborador em um tipo de avaliação. */

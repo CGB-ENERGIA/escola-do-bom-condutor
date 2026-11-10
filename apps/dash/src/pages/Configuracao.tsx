@@ -268,14 +268,16 @@ function FormColaborador({ inicial, bases, gerencias, processos, situacoes, onFe
   });
   const [erro, setErro] = useState<string>();
   const [salvando, setSalvando] = useState(false);
+  const [confirmar, setConfirmar] = useState(false);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const nomeRepetido = !!erro && erro.includes("Confirme se são pessoas diferentes");
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     setErro(undefined); setSalvando(true);
     try {
-      if (novo) await api.criarColaborador({ ...f, chapa: f.chapa.trim() });
-      else await api.editarColaborador(inicial!.id, f);
+      if (novo) await api.criarColaborador({ ...f, chapa: f.chapa.trim(), confirmar } as never);
+      else await api.editarColaborador(inicial!.id, { ...f, confirmar } as never);
       onSalvo(novo ? `Colaborador ${f.nome.toUpperCase()} adicionado.` : `Dados de ${f.nome.toUpperCase()} atualizados.`);
     } catch (err) { setErro((err as Error).message); setSalvando(false); }
   }
@@ -305,9 +307,15 @@ function FormColaborador({ inicial, bases, gerencias, processos, situacoes, onFe
           {campo("Processo", "processo", { lista: processos })}
         </div>
         {erro && <p className="alert af" role="alert">{erro}</p>}
+        {nomeRepetido && (
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input type="checkbox" className="mt-1" checked={confirmar} onChange={(e) => setConfirmar(e.target.checked)} />
+            <span>São pessoas diferentes (homônimos). Salvar mesmo assim.</span>
+          </label>
+        )}
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button" className="btn btn-g" onClick={onFechar}>Cancelar</button>
-          <button className="btn btn-p" disabled={salvando}>{salvando ? <><span className="spinner" /> Salvando…</> : "Salvar"}</button>
+          <button className="btn btn-p" disabled={salvando || (nomeRepetido && !confirmar)}>{salvando ? <><span className="spinner" /> Salvando…</> : "Salvar"}</button>
         </div>
       </form>
     </Modal>
@@ -484,6 +492,13 @@ function Importar({ editavel, totalAtivos, onFechar, onFeito }: { editavel: bool
                   </label>
                 ))}
               </fieldset>
+            )}
+
+            {previa.avisos.length > 0 && (
+              <div className="alert text-sm" role="status">
+                <p className="font-semibold">Possível duplicidade de nome ({previa.avisos.length})</p>
+                <ul className="mt-1 max-h-40 list-disc space-y-0.5 overflow-y-auto pl-5 text-xs">{previa.avisos.map((a) => <li key={a}>{a}</li>)}</ul>
+              </div>
             )}
 
             {muitos && (
